@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#D71920">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="12 道题，约 2 分钟，测出你是哪种广州马拉松赛跑者。">
+<title>广州马拉松赛｜跑者人格测试</title>
+<style>
+  :root{
+    --gz-red:#D71920;
+    --gz-orange:#F26522;
+    --gz-yellow:#FFC72C;
+    --gz-bg:#FFF8F0;
+    --gz-text:#2B2B2B;
+    --gz-muted:#6B6B6B;
+    --gz-card:#FFFFFF;
+    --gz-line:#F0E0D0;
+    --gz-cream:#FFF6EC;
+    --gz-radius:22px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{max-width:100%;overflow-x:hidden}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    color:var(--gz-text);
+    background-color:var(--gz-bg);
+    background-image:
+      radial-gradient(92% 44% at 104% -8%, rgba(255,199,44,.36), rgba(255,199,44,0) 62%),
+      radial-gradient(84% 40% at -10% 0%, rgba(242,101,34,.18), rgba(242,101,34,0) 60%),
+      radial-gradient(80% 38% at 50% 104%, rgba(215,25,32,.07), rgba(215,25,32,0) 70%);
+    background-repeat:no-repeat;
+    -webkit-tap-highlight-color:transparent;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:640px;margin:0 auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
+
+  /* ---------- 品牌条 ---------- */
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 2px 14px}
+  .brand__mark{
+    width:34px;height:34px;flex:0 0 auto;border-radius:10px;color:#fff;
+    background:linear-gradient(135deg,var(--gz-red),var(--gz-orange));
+    display:flex;align-items:center;justify-content:center;
+    font-size:17px;font-weight:800;letter-spacing:0;
+    box-shadow:0 8px 16px -8px rgba(215,25,32,.85);
+  }
+  .brand__name{font-size:16px;font-weight:800;letter-spacing:.02em;line-height:1.25}
+  .brand__en{margin-top:3px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gz-muted);white-space:nowrap}
+
+  /* ---------- 卡片与屏幕 ---------- */
+  .card{
+    position:relative;background:var(--gz-card);border:1px solid rgba(240,224,208,.95);
+    border-radius:var(--gz-radius);overflow:hidden;
+    box-shadow:0 22px 44px -26px rgba(122,52,22,.42), 0 2px 8px rgba(43,43,43,.04);
+  }
+  .screen{display:none}
+  .screen.is-on{display:block;animation:cardIn .34s cubic-bezier(.22,.8,.3,1) both}
+  @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---------- 照片横幅 ----------
+     图片用 background-size:cover 显示：永远按原始比例等比缩放，
+     只在容器里做不同区域的裁切，任何浏览器（含旧微信内核）都不会被拉伸变形。 */
+  .photo{
+    position:relative;width:100%;overflow:hidden;
+    background:linear-gradient(135deg,var(--gz-red),var(--gz-orange));
+  }
+  .photo__img{
+    position:absolute;inset:0;
+    background-color:transparent;
+    background-repeat:no-repeat;
+    background-size:cover;
+    background-position:center 50%;
+  }
+  .photo__shade{
+    position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:linear-gradient(180deg, rgba(56,14,8,.10) 0%, rgba(56,14,8,0) 40%, rgba(66,18,8,.62) 100%);
+  }
+  .photo__badge{
+    position:absolute;right:12px;top:12px;z-index:2;
+    padding:5px 10px;border-radius:999px;
+    font-size:11px;font-weight:800;letter-spacing:.14em;color:#4A2A05;
+    background:rgba(255,199,44,.94);
+    box-shadow:0 4px 10px rgba(60,20,10,.22);
+  }
+  /* 高度：先给固定值兜底，支持 aspect-ratio 的浏览器随宽度等比缩放 */
+  .photo--start{height:192px}
+  .photo--quiz{height:88px}
+  .photo--result{height:150px}
+  @supports (aspect-ratio: 16 / 9){
+    .photo--start{height:auto;aspect-ratio:16 / 9;min-height:176px;max-height:300px}
+    .photo--quiz{height:auto;aspect-ratio:4 / 1;min-height:82px;max-height:118px}
+    .photo--result{height:auto;aspect-ratio:21 / 9;min-height:140px;max-height:214px}
+  }
+  .photo--start .photo__img{background-position:center 52%}
+  .photo--quiz .photo__img{background-position:center 62%}
+  .photo--result .photo__img{background-position:center 56%}
+  .photo--quiz .photo__shade{background:linear-gradient(180deg, rgba(56,14,8,.06) 0%, rgba(56,14,8,0) 55%, rgba(66,18,8,.45) 100%)}
+  .photo--result .photo__shade{background:linear-gradient(180deg, rgba(56,14,8,.06) 0%, rgba(56,14,8,0) 46%, rgba(66,18,8,.55) 100%)}
+  .photo-fallback .photo__img{background-image:none}
+  .photo-fallback::after{
+    content:"广州马拉松赛";
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;
+    color:#fff;font-weight:700;letter-spacing:2px;font-size:15px;
+    background:linear-gradient(135deg,var(--gz-red),var(--gz-orange));
+  }
+
+  .pad{padding:20px 18px 22px}
+
+  /* ---------- 开始页 ---------- */
+  .eyebrow{
+    margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--gz-orange);
+  }
+  .hero-title{
+    margin:0 0 12px;font-size:28px;font-size:clamp(25px,7.4vw,32px);line-height:1.38;
+    font-weight:800;letter-spacing:.01em;color:#241C18;
+  }
+  .hero-title .hl{
+    background:linear-gradient(180deg,rgba(255,199,44,0) 58%, rgba(255,199,44,.72) 58%, rgba(255,199,44,.72) 92%, rgba(255,199,44,0) 92%);
+    padding:0 2px;
+  }
+  .lede{margin:0 0 18px;font-size:16px;line-height:1.78;color:#4A423C}
+  .flow{
+    list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    margin:0 0 22px;padding:0;
+  }
+  .flow li{
+    padding:10px 8px 9px;border-radius:12px;text-align:center;
+    background:linear-gradient(180deg,#FFFAF3,#FFF2E4);
+    border:1px solid #F7E5D2;
+  }
+  .flow b{display:block;font-size:11px;letter-spacing:.12em;color:var(--gz-orange);font-weight:800}
+  .flow span{display:block;margin-top:3px;font-size:14px;font-weight:700;color:#5A4A3E}
+
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;min-height:56px;padding:0 18px;
+    border:0;border-radius:14px;font-family:inherit;
+    font-size:17px;font-weight:800;letter-spacing:.05em;
+    cursor:pointer;transition:transform .12s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  .btn svg{flex:0 0 auto}
+  .btn--primary{
+    color:#fff;background:linear-gradient(135deg,var(--gz-red),var(--gz-orange));
+    box-shadow:0 16px 26px -14px rgba(215,25,32,.85), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .btn--primary:active{transform:translateY(1px) scale(.994);box-shadow:0 8px 16px -12px rgba(215,25,32,.8)}
+  .btn--ghost{
+    color:var(--gz-red);background:#fff;border:1.5px solid rgba(215,25,32,.32);
+  }
+  .btn--ghost:active{transform:translateY(1px) scale(.994);background:#FFF7F2}
+  .note{margin:12px 0 0;font-size:14px;line-height:1.6;color:var(--gz-muted);text-align:center}
+
+  /* ---------- 答题页 ---------- */
+  .quiz-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .stage{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 12px;border-radius:999px;
+    font-size:14px;font-weight:800;color:#6E4200;letter-spacing:.04em;
+    background:linear-gradient(180deg,#FFF6D8,#FFE9AE);
+    border:1px solid #FBE1A0;
+  }
+  .stage::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gz-orange)}
+  .count{font-size:14px;font-weight:700;color:var(--gz-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .count b{font-size:16px;color:#241C18}
+  .progress{height:8px;border-radius:999px;background:#F7E8D9;overflow:hidden;margin:0 0 20px}
+  .progress__bar{
+    height:100%;width:8.34%;border-radius:999px;
+    background:linear-gradient(90deg,var(--gz-red),var(--gz-orange),var(--gz-yellow));
+    transition:width .42s cubic-bezier(.22,.8,.3,1);
+  }
+  .quiz-body{will-change:opacity,transform}
+  .quiz-body.is-swap{animation:qSwap .26s ease both}
+  @keyframes qSwap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .q-title{margin:0 0 10px;font-size:20px;line-height:1.5;font-weight:800;color:#241C18;letter-spacing:.01em}
+  .q-text{margin:0 0 18px;font-size:16.5px;line-height:1.86;color:#3A332E}
+  .opts{display:flex;flex-direction:column;gap:12px}
+  .opt{
+    display:flex;align-items:flex-start;gap:11px;width:100%;
+    min-height:56px;padding:14px 14px 15px;text-align:left;
+    background:#FFFDFB;border:1.5px solid var(--gz-line);border-radius:14px;
+    font-family:inherit;font-size:16px;line-height:1.72;color:#2E2723;
+    cursor:pointer;transition:transform .12s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+  }
+  .opt:active{transform:scale(.992);background:var(--gz-cream)}
+  .opt__key{
+    flex:0 0 auto;width:27px;height:27px;margin-top:1px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:800;color:var(--gz-red);
+    background:#FFF1E4;border:1px solid #F6DCC7;
+    transition:background .16s ease, color .16s ease, border-color .16s ease;
+  }
+  .opt__text{flex:1 1 auto;min-width:0;overflow-wrap:break-word}
+  .opt.is-picked{border-color:var(--gz-orange);background:var(--gz-cream);box-shadow:0 0 0 3px rgba(242,101,34,.13)}
+  .opt.is-picked .opt__key{
+    color:#fff;border-color:transparent;
+    background:linear-gradient(135deg,var(--gz-red),var(--gz-orange));
+  }
+  .opt[disabled]{cursor:default}
+  .hint{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    margin:16px 0 0;font-size:15px;color:var(--gz-muted);
+  }
+  .hint svg{opacity:.65}
+
+  /* ---------- 结果页 ---------- */
+  .res-label{margin:0 0 4px;font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--gz-muted)}
+  .res-type{
+    margin:0;font-size:52px;font-size:clamp(46px,15.4vw,60px);line-height:1.02;font-weight:900;letter-spacing:.06em;
+    background:linear-gradient(128deg,var(--gz-red) 8%,var(--gz-orange) 72%,#F7941E 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    -webkit-text-fill-color:transparent;
+  }
+  .res-nick{margin:8px 0 0;font-size:27px;line-height:1.35;font-weight:800;color:#241C18;letter-spacing:.01em}
+  .res-style{
+    display:inline-flex;align-items:baseline;
+    margin-top:14px;padding:8px 13px;border-radius:999px;
+    font-size:15px;font-weight:700;color:#6E4200;
+    background:linear-gradient(180deg,#FFF6D8,#FFE9AE);border:1px solid #FBE1A0;
+  }
+  .res-style em{font-style:normal;color:#8A3B00}
+  .slogan{
+    margin:18px 0 0;padding:14px 14px 14px 15px;
+    border-left:3px solid var(--gz-orange);border-radius:0 12px 12px 0;
+    background:linear-gradient(90deg,rgba(255,199,44,.22),rgba(255,199,44,0));
+    font-size:17px;font-weight:700;line-height:1.7;color:#4A2A18;
+  }
+  .desc{margin:16px 0 0;font-size:16px;line-height:1.92;color:#3A332E}
+  .kws{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .kws span{
+    padding:6px 12px;border-radius:999px;font-size:14px;font-weight:700;color:#7A4A05;
+    background:#FFF4D2;border:1px solid #FFE7AC;
+  }
+  .hr{height:1px;margin:22px 0 0;background:linear-gradient(90deg,rgba(215,25,32,.16),rgba(215,25,32,0))}
+  .partner{margin-top:18px;padding:16px;border-radius:16px;border:1px solid #F3E3D2;background:linear-gradient(160deg,#FFFAF3,#FFF1E3)}
+  .partner h3{
+    display:flex;align-items:center;gap:6px;margin:0 0 8px;
+    font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--gz-red);
+  }
+  .partner p{margin:0;font-size:15.5px;line-height:1.86;color:#41382F}
+  .partner p b{color:#241C18}
+  .res-actions{margin-top:22px}
+  .share{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    margin:14px 0 0;font-size:14px;color:var(--gz-muted);text-align:center;
+  }
+  .share svg{opacity:.6}
+  .foot{margin:16px 0 0;font-size:12px;line-height:1.7;text-align:center;color:#9A8B7E;letter-spacing:.04em}
+
+  @media (min-width:480px){
+    .app{padding:20px 20px 34px}
+    .pad{padding:24px 22px 26px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand">
+    <div class="brand__mark">广</div>
+    <div>
+      <div class="brand__name" data-event>广州马拉松赛</div>
+      <div class="brand__en">Guangzhou Marathon</div>
+    </div>
+  </div>
+
+  <!-- ================= 开始页 ================= -->
+  <section class="screen is-on" id="screen-start">
+    <div class="card">
+      <div class="photo photo--start">
+        <div class="photo__img" role="img" aria-label="广州马拉松赛赛道现场" style="background-image:url('guangma-photo.jpg')"></div>
+        <div class="photo__shade"></div>
+        <div class="photo__badge">42.195 KM</div>
+      </div>
+      <div class="pad">
+        <p class="eyebrow">Runner Personality Test</p>
+        <h1 class="hero-title">你是哪种<br><span class="hl" data-event>广州马拉松赛</span>跑者？</h1>
+        <p class="lede">12 道题，约 2 分钟，凭第一直觉选择。测出你的跑者人格，以及适合你的备战风格。</p>
+        <ul class="flow">
+          <li><b>01 — 04</b><span>赛前准备</span></li>
+          <li><b>05 — 08</b><span>比赛日</span></li>
+          <li><b>09 — 12</b><span>赛后</span></li>
+        </ul>
+        <button type="button" class="btn btn--primary" id="btn-start">
+          开始测试
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p class="note">不收集任何个人信息 · 结果仅供娱乐</p>
+      </div>
+    </div>
+    <p class="foot">广州马拉松赛 · 跑者人格测试</p>
+  </section>
+
+  <!-- ================= 答题页 ================= -->
+  <section class="screen" id="screen-quiz">
+    <div class="card">
+      <div class="photo photo--quiz">
+        <div class="photo__img" role="img" aria-label="广州马拉松赛" style="background-image:url('guangma-photo.jpg')"></div>
+        <div class="photo__shade"></div>
+      </div>
+      <div class="pad">
+        <div class="quiz-meta">
+          <span class="stage" id="stage-tag">赛前准备</span>
+          <span class="count">第 <b id="q-index">1</b> / 12 题</span>
+        </div>
+        <div class="progress"><div class="progress__bar" id="progress-bar"></div></div>
+        <div class="quiz-body" id="quiz-body">
+          <h2 class="q-title" id="q-title"></h2>
+          <p class="q-text" id="q-text"></p>
+          <div class="opts" id="opts"></div>
+        </div>
+        <p class="hint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2.4" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          凭第一直觉选，选完不可改。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 结果页 ================= -->
+  <section class="screen" id="screen-result">
+    <div class="card">
+      <div class="photo photo--result">
+        <div class="photo__img" role="img" aria-label="广州马拉松赛赛道现场" style="background-image:url('guangma-photo.jpg')"></div>
+        <div class="photo__shade"></div>
+        <div class="photo__badge">42.195 KM</div>
+      </div>
+      <div class="pad">
+        <p class="res-label">你的<span data-event>广州马拉松赛</span>跑者人格</p>
+        <p class="res-type" id="res-type">ESTJ</p>
+        <h2 class="res-nick" id="res-nick"></h2>
+        <div class="res-style">备战风格：<em id="res-style">计划执行型</em></div>
+
+        <blockquote class="slogan" id="res-slogan"></blockquote>
+        <p class="desc" id="res-desc"></p>
+        <div class="kws" id="res-kws"></div>
+
+        <div class="hr"></div>
+        <div class="partner">
+          <h3>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20s-7-4.3-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.7-7 9-7 9Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
+            最佳赛道搭子
+          </h3>
+          <p id="res-partner"></p>
+        </div>
+
+        <div class="res-actions">
+          <button type="button" class="btn btn--ghost" id="btn-restart">
+            重新测试
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.49-6.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20.5 4.2v5.2h-5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <p class="share">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.8"/><path d="M8 6l1.4-2h5.2L16 6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          截图分享给你的跑友
+        </p>
+      </div>
+    </div>
+    <p class="foot">广州马拉松赛 · 跑者人格测试 · 趣味测试，结果仅供参考</p>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var EVENT_NAME = "广州马拉松赛";
+
+  /* =====================================================================
+     12 题（严格对应《广州马拉松赛MBTI_12题定稿.md》，未改写题干与选项）
+     ===================================================================== */
+  var QUESTIONS = [
+    {
+      id: "pre01",
+      stage: "赛前准备",
+      dimension: "EI",
+      title: "领物前夜，跑友群响了",
+      question: "广州马拉松赛领物前夜，跑友群里有人问：“明天谁一起去领物？住哪？几点出发？”你会——",
+      options: [
+        { label: "A", text: "顺手在群里约人拼车、拼房、一起去领物，顺便问问大家的目标配速和路线。人群和热闹本身，就是比赛的一部分。", value: "E" },
+        { label: "B", text: "把身份证、领物截图、号码布信息又核对一遍，决定自己按清单走。安静一点，反而更踏实。", value: "I" }
+      ]
+    },
+    {
+      id: "pre02",
+      stage: "赛前准备",
+      dimension: "SN",
+      title: "广州马拉松赛这几天，你怎么看广州",
+      question: "中签广州马拉松赛之后到开跑前，关于机酒和行程，你更接近——",
+      options: [
+        { label: "A", text: "查清楚具体信息：酒店到起点怎么走、地铁几号线、天气怎样、领物点在哪、赛道哪些 CP 点有补给。越具体越安心。", value: "S" },
+        { label: "B", text: "酒店和起点定好就行，其他更想留到现场看感觉。广州这几天会遇到什么，到了再说。", value: "N" }
+      ]
+    },
+    {
+      id: "pre03",
+      stage: "赛前准备",
+      dimension: "TF",
+      title: "装备、补给和配速，你信什么",
+      question: "赛前准备装备和补给时，你更可能——",
+      options: [
+        { label: "A", text: "做一张表：比赛穿哪双鞋、每个 CP 点补什么、前 5 公里压多少、30 公里后怎么调，尽量用数据和计划说话。", value: "T" },
+        { label: "B", text: "带自己穿惯的装备，补给看身体反馈，配速也留点余地。状态和心情，比表格更重要。", value: "F" }
+      ]
+    },
+    {
+      id: "pre04",
+      stage: "赛前准备",
+      dimension: "JP",
+      title: "订机酒和排行程，你是哪一派",
+      question: "中签广州马拉松赛之后，订机酒和排这几天行程，你更接近——",
+      options: [
+        { label: "A", text: "尽早订好可退改的机酒，把领物、比赛、吃饭、返程大致排好，行程表在心里有数。", value: "J" },
+        { label: "B", text: "差不多就行，临近再定，留出弹性给突发状况和临时偶遇。不赶下一场，反而更自在。", value: "P" }
+      ]
+    },
+    {
+      id: "race01",
+      stage: "比赛日",
+      dimension: "EI",
+      title: "天还没完全亮，你已经站在起点",
+      question: "比赛日清晨，天河体育中心。天还没有完全亮，起点附近已经聚起了密密麻麻的人群。有人压腿，有人拍照，倒计时一点点接近。你身边的跑者笑着问：“第几次跑广州马拉松赛呀？”你会——",
+      options: [
+        { label: "A", text: "顺势聊起来。“你从哪里来？”“之前跑过哪些马？”“今天准备跑多少？”几句话下来，你们已经聊到今天的目标配速。如果节奏合适，说不定还能一起跑上一段。人群这么热闹，当然要认识点新朋友。", value: "E" },
+        { label: "B", text: "笑着回应两句，然后重新戴上耳机。这一刻，你更想把注意力收回来：手表、电量、鞋带、呼吸，还有即将开始的 42.195 公里。枪声响起之前，先和自己待一会儿。", value: "I" }
+      ]
+    },
+    {
+      id: "race02",
+      stage: "比赛日",
+      dimension: "SN",
+      title: "跑到珠江边，广州突然在眼前展开",
+      question: "从天河体育中心出发，一路向南。前方的路开始变得开阔。珠江在身边延伸，高楼从视线里掠过，与猎德大桥、广州塔接连相遇。风从江面吹过来，身边是一眼望不到头的跑者。这一刻，你最容易被什么吸引？",
+      options: [
+        { label: "A", text: "那些具体而真实的广州。江面上的风，猎德大桥的弧线，远处的高楼，阳光落在珠江上的光影。跑过一个熟悉的地标，你还会下意识记一下：“这里拍出来一定很好看。”你喜欢这样的时刻——一边跑，一边把这座城市一点点看进眼里。", value: "S" },
+        { label: "B", text: "那些说不清楚的感觉。你可能没有特别在意自己经过了哪些地标。但江风吹过来的那一刻，你突然想到：第一次跑马是什么时候？已经跑过多少公里？为什么还在一次次报名？看着眼前不断向前延伸的赛道，你不由得感触：一条赛道，也在奔跑间变成了独属于自己的故事。", value: "N" }
+      ]
+    },
+    {
+      id: "race03",
+      stage: "比赛日",
+      dimension: "TF",
+      title: "30公里之后，你开始听见那些真正留下来的声音",
+      question: "跑过一个又一个 CP 点，距离终点越来越近，但双腿也越来越沉。这是马拉松最真实的时刻。前面还有路，身体却开始不断提醒你：“要不慢一点？”等你终于跑过终点，回头想起这场广州马拉松赛，最容易留在脑海里的，会是——",
+      options: [
+        { label: "A", text: "手表上的数字。前半程配速怎么样？30 公里以后掉了多少？距离 PB 还差多少？冲过终点线，你可能已经打开运动记录开始复盘。看看配速，看看心率，再研究一下每个分段。因为对于你来说：数据会告诉你，这场比赛究竟跑得怎么样。", value: "T" },
+        { label: "B", text: "一个打动你的瞬间。也许是赛道边那个一直挥手的广州市民。也许是一首刚好在最累的时候响起的粤语歌，或是路旁的醒狮少年。具体是几公里，你可能已经记不清了。但你知道：那一刻，你真的被这场广州马拉松赛打动过。", value: "F" }
+      ]
+    },
+    {
+      id: "race04",
+      stage: "比赛日",
+      dimension: "JP",
+      title: "比赛中段，你怎么执行配速和补给",
+      question: "跑到比赛中段，身体开始进入真实节奏。面对赛前定好的配速和补给安排，你更接近——",
+      options: [
+        { label: "A", text: "按赛前计划执行：前段压住、分段配速、CP 点该补就补，尽量不临时大改。计划定了，就照着走。", value: "J" },
+        { label: "B", text: "把计划当参考：看当天体感、气温和现场状态随时调整。身体说慢一点就慢一点，感觉对了再提。", value: "P" }
+      ]
+    },
+    {
+      id: "post01",
+      stage: "赛后",
+      dimension: "EI",
+      title: "冲线之后，你更想和谁在一起",
+      question: "终于跑完 42.195 公里，奖牌到手。短暂休整之后，你更可能——",
+      options: [
+        { label: "A", text: "在跑友群里发消息，约人吃饭、喝东西、聊比赛，把今天的配速、照片和冲线瞬间分享出去。", value: "E" },
+        { label: "B", text: "先自己安静待着，回酒店洗澡、拉伸、整理照片。想说话的时候，再找一两个熟人聊。", value: "I" }
+      ]
+    },
+    {
+      id: "post02",
+      stage: "赛后",
+      dimension: "SN",
+      title: "赛后复盘，你记住什么",
+      question: "完赛后回想这场广州马拉松赛，你更容易记住——",
+      options: [
+        { label: "A", text: "具体的东西：哪一段沿江、哪座桥、哪个补给站、哪张照片拍得好。路线和城市细节，在你脑子里很清楚。", value: "S" },
+        { label: "B", text: "整体的感觉：这场比赛带给你的情绪、意义，或者某个突然冒出来的念头。具体几公里，反而没那么重要。", value: "N" }
+      ]
+    },
+    {
+      id: "post03",
+      stage: "赛后",
+      dimension: "TF",
+      title: "看成绩单时，你先看什么",
+      question: "赛后打开成绩和运动记录，你更先关注——",
+      options: [
+        { label: "A", text: "数据：枪声成绩、净计时、分段配速、心率、30 公里后掉了多少，哪里还能优化。", value: "T" },
+        { label: "B", text: "感受：终点那一刻的心情、志愿者和市民的加油、同行跑友的一句话，哪个瞬间最让你记住。", value: "F" }
+      ]
+    },
+    {
+      id: "post04",
+      stage: "赛后",
+      dimension: "JP",
+      title: "冲过广州马拉松赛终点线，接下来去哪儿",
+      question: "终于跑完 42.195 公里。奖牌到手，双腿暂时也不想动了。收拾休整一段时间之后，你会——",
+      options: [
+        { label: "A", text: "下一项日程，早就安排好了。打开手机，翻出早就整理好的「广州必打卡攻略」。吃什么、去哪儿、几点出发，甚至连第二天去哪儿都已经标好了。短暂适度的休息只是计划的一部分。“马拉松跑完了，广州之旅才刚刚开始！”", value: "J" },
+        { label: "B", text: "没有计划，就是最好的计划。先躺一会儿。吃什么？再说。去哪儿？看心情。明天干嘛？睡醒再决定。不设目的地，不赶下一场，攻略当然可以有，但你还是更喜欢——乘兴而至，兴尽而归。在广州还将遇见什么，就让缘分决定吧！", value: "P" }
+      ]
+    }
+  ];
+
+  /* =====================================================================
+     16 型结果文案（对应需求文档第 7 节，原文照录）
+     ===================================================================== */
+  var RESULTS = {
+    ESTJ: {
+      nickname: "赛道执行官",
+      slogan: "既然来了，就按计划跑好这一场。",
+      description: "路线、配速、补给、装备，每一样都有自己的安排。别人还在纠结今天怎么跑，你已经按照计划跑完10公里。",
+      keywords: "目标明确 / 执行力 / 稳中求进",
+      partner: "ENFP｜赛道探索者——一个负责把路线跑明白，一个负责发现路上的惊喜。你说“按计划来”，TA说“前面好像有好玩的”。刚刚好。"
+    },
+    ESTP: {
+      nickname: "务实行动派",
+      slogan: "先跑起来，剩下的边跑边说。",
+      description: "你不太喜欢把比赛想得太复杂。鞋穿好，号码布别忘，站到起点——跑。状态好就加一点，状态一般就稳一点。",
+      keywords: "行动派 / 临场感 / 越跑越兴奋",
+      partner: "ISTP｜独行高手——一个敢冲，一个稳得住。不需要说太多，跑起来就知道下一步怎么走。"
+    },
+    ESFJ: {
+      nickname: "赛道“社牛”",
+      slogan: "跑马嘛，就是要热热闹闹。",
+      description: "起点认识一个人，补给站聊两句，赛道遇见熟人再打个招呼。你跑的不只是42.195公里，还有一路上的人。",
+      keywords: "热闹 / 朋友 / 氛围感",
+      partner: "ISFJ｜温柔陪跑者——一个负责把气氛拉满，一个负责照顾身边的人。从起点聊到终点，大概连补给站都舍不得错过。"
+    },
+    ESFP: {
+      nickname: "赛道体验派",
+      slogan: "PB很好，但今天开心更重要。",
+      description: "如果路边刚好有醒狮，如果一首粤语歌突然响起来，如果整个珠江边都在给你加油——你可能会暂时忘记配速。",
+      keywords: "快乐 / 热烈 / 氛围制造机",
+      partner: "ENTJ｜PB猎人——一个负责追PB，一个负责让这场PB之旅别太严肃。你负责开心，TA负责提醒：“别忘了今天的目标。”"
+    },
+    ENTJ: {
+      nickname: "PB猎人",
+      slogan: "下一场，再快一点。",
+      description: "对你来说，马拉松从来不只是完成。每一次比赛，都在回答一个问题：还能不能更快？",
+      keywords: "目标 / 进阶 / PB",
+      partner: "ESFP｜赛道体验派——你负责盯住配速，TA负责提醒你——别光盯着表，广州也很好看。"
+    },
+    ENTP: {
+      nickname: "赛道实验家",
+      slogan: "如果换一种跑法，会怎么样？",
+      description: "今天试试负分段，下次换个配速策略。别人研究怎么跑得更稳，你更想知道：“如果这么跑，会发生什么？”",
+      keywords: "好奇 / 尝试 / 不按套路",
+      partner: "INTJ｜战略跑者——一个负责提出新想法，一个负责把想法变成可执行方案。“要不这么跑？”“可以，先算一下。”"
+    },
+    ENFJ: {
+      nickname: "细腻领跑者",
+      slogan: "别急，一起到。",
+      description: "你很容易注意到身边的人。谁开始掉速了，谁需要一句鼓励，谁在犹豫要不要坚持——你总会看见。",
+      keywords: "陪伴 / 鼓励 / 共同完成",
+      partner: "ISTP｜独行高手——一个善于发现别人的状态，一个习惯保持自己的节奏。不需要一直说话，但关键时候，总有人在。"
+    },
+    ENFP: {
+      nickname: "赛道探索者",
+      slogan: "这一趟，一定会遇见点什么。",
+      description: "你报名广马，当然是为了42.195公里。但又不只是为了42.195公里。你期待珠江边的风，期待广州的清晨，也期待那些没有写进计划里的小故事。",
+      keywords: "探索 / 好奇 / 意外惊喜",
+      partner: "ESTJ｜赛道执行官——一个负责“我们今天一定按计划跑完”，一个负责“等等，这里好像有点意思”。一个让旅程不跑偏，一个让旅程不无聊。"
+    },
+    ISTJ: {
+      nickname: "配速规划师",
+      slogan: "稳住，按照自己的节奏来。",
+      description: "目标配速、补给节点、前半程怎么收、后半程怎么加——提前想清楚。42.195公里不是一时冲动，而是一件值得认真完成的事情。",
+      keywords: "稳定 / 计划 / 执行",
+      partner: "ESFP｜赛道体验派——你负责稳住节奏，TA负责把沿途的热闹都带进来。一个不乱，一个不闷。"
+    },
+    ISTP: {
+      nickname: "独行高手",
+      slogan: "不需要跟谁一样，跑自己的。",
+      description: "人很多，声音很多，配速也很多。但你知道自己的节奏。别人加速，你不急。别人掉速，你也不慌。",
+      keywords: "独立 / 节奏 / 冷静",
+      partner: "ENFJ｜细腻领跑者——一个不喜欢被打扰，一个很会照顾别人。不需要一直黏在一起，但需要的时候，TA总在。"
+    },
+    ISFJ: {
+      nickname: "温柔陪跑者",
+      slogan: "慢一点没关系，我们一起。",
+      description: "你不太在意一定要跑出多快。有人陪着跑，有人一起聊天，有人在最累的时候互相打气，这场比赛就已经值得。",
+      keywords: "温柔 / 陪伴 / 坚持",
+      partner: "ESFJ｜赛道“社牛”——一个负责聊天，一个负责听。从起点聊到终点，42.195公里好像也没有那么长。"
+    },
+    ISFP: {
+      nickname: "城市漫游者",
+      slogan: "既然来了，就好好看看广州。",
+      description: "你喜欢跑步，也喜欢跑步时看到的世界。珠江边的风，桥上的阳光，老城街道里的烟火气，还有沿途一闪而过的广州。",
+      keywords: "感受 / 城市 / 松弛",
+      partner: "INTP｜研究型跑者——一个看风景，一个看数据。你说“今天广州真好看”，TA说“你刚才这一公里配速不错”。各看各的，但可以一起跑。"
+    },
+    INTJ: {
+      nickname: "战略跑者",
+      slogan: "42.195公里，也是一场长期计划。",
+      description: "你不会只关注今天这一场。训练周期、比赛目标、配速策略、恢复安排……你会把一场马拉松放进更大的计划里。",
+      keywords: "策略 / 长期主义 / 目标",
+      partner: "ENTP｜赛道实验家——一个负责长期布局，一个负责不断提出新打法。计划可以很严谨，但偶尔也可以试试新的可能。"
+    },
+    INTP: {
+      nickname: "研究型跑者",
+      slogan: "让我先看看数据。",
+      description: "配速、心率、步频、步幅……每一个数字，都值得研究。因为你相信：数据里藏着答案。",
+      keywords: "分析 / 数据 / 好奇",
+      partner: "ISFP｜城市漫游者——一个研究每一公里，一个感受每一公里。你负责看表，TA负责看广州。"
+    },
+    INFJ: {
+      nickname: "理想实践者",
+      slogan: "这一次，我想完成自己的答案。",
+      description: "你报名一场马拉松，通常不只是因为一个成绩目标。也许是想完成一次突破，也许是想证明自己可以坚持。42.195公里结束的时候，你真正开心的可能是：“我真的做到了。”",
+      keywords: "意义 / 坚持 / 自我突破",
+      partner: "INFP｜故事收藏家——一个把42.195公里跑成自己的故事，一个会记住这一路上的故事。比赛结束以后，你们大概都会记得这一天很久。"
+    },
+    INFP: {
+      nickname: "故事收藏家",
+      slogan: "成绩会留下，故事也会留下。",
+      description: "你可能记不清自己在哪个公里点掉了速，却记得：那天的风是什么感觉，记得某首歌在什么时候响起，记得那个陌生人说的那句“加油”。",
+      keywords: "感受 / 记忆 / 故事",
+      partner: "INFJ｜理想实践者——一个把42.195公里跑成自己的故事，一个会认真听完这个故事。也许你们都不太在意谁跑得更快。但一定会记得这场广州马拉松赛。"
+    }
+  };
+
+  /* 备战风格副标签：J/P × T/F */
+  var STYLE_TAGS = {
+    JT: "计划执行型",
+    JF: "计划关怀型",
+    PT: "弹性数据型",
+    PF: "随缘体感型"
+  };
+
+  var els = {
+    screens: {
+      start: document.getElementById("screen-start"),
+      quiz: document.getElementById("screen-quiz"),
+      result: document.getElementById("screen-result")
+    },
+    stageTag: document.getElementById("stage-tag"),
+    qIndex: document.getElementById("q-index"),
+    progressBar: document.getElementById("progress-bar"),
+    quizBody: document.getElementById("quiz-body"),
+    qTitle: document.getElementById("q-title"),
+    qText: document.getElementById("q-text"),
+    opts: document.getElementById("opts"),
+    resType: document.getElementById("res-type"),
+    resNick: document.getElementById("res-nick"),
+    resStyle: document.getElementById("res-style"),
+    resSlogan: document.getElementById("res-slogan"),
+    resDesc: document.getElementById("res-desc"),
+    resKws: document.getElementById("res-kws"),
+    resPartner: document.getElementById("res-partner")
+  };
+
+  var state = { index: 0, answers: [], locked: false };
+
+  /* ---------- 工具 ---------- */
+  function showScreen(name) {
+    Object.keys(els.screens).forEach(function (key) {
+      els.screens[key].classList.toggle("is-on", key === name);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function computeType(answers) {
+    var scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+    answers.forEach(function (ans) { scores[ans] += 1; });
+    return (scores.E > scores.I ? "E" : "I") +
+           (scores.S > scores.N ? "S" : "N") +
+           (scores.T > scores.F ? "T" : "F") +
+           (scores.J > scores.P ? "J" : "P");
+  }
+
+  function styleTagOf(type) {
+    var jp = type.charAt(3);   // J / P
+    var tf = type.charAt(2);   // T / F
+    return STYLE_TAGS[jp + tf];
+  }
+
+  /* ---------- 答题 ---------- */
+  function renderQuestion() {
+    var q = QUESTIONS[state.index];
+    var total = QUESTIONS.length;
+
+    els.stageTag.textContent = q.stage;
+    els.qIndex.textContent = String(state.index + 1);
+    els.progressBar.style.width = ((state.index + 1) / total * 100).toFixed(2) + "%";
+
+    els.qTitle.textContent = q.title;
+    els.qText.textContent = q.question;
+
+    els.opts.innerHTML = "";
+    q.options.forEach(function (opt) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "opt";
+      btn.setAttribute("data-value", opt.value);
+
+      var key = document.createElement("span");
+      key.className = "opt__key";
+      key.textContent = opt.label;
+
+      var text = document.createElement("span");
+      text.className = "opt__text";
+      text.textContent = opt.text;
+
+      btn.appendChild(key);
+      btn.appendChild(text);
+      btn.addEventListener("click", function () { pick(btn, opt.value); });
+      els.opts.appendChild(btn);
+    });
+
+    els.quizBody.classList.remove("is-swap");
+    void els.quizBody.offsetWidth;
+    els.quizBody.classList.add("is-swap");
+  }
+
+  function pick(btn, value) {
+    if (state.locked) return;
+    state.locked = true;
+
+    Array.prototype.forEach.call(els.opts.children, function (node) {
+      node.setAttribute("disabled", "disabled");
+    });
+    btn.classList.add("is-picked");
+
+    state.answers.push(value);
+
+    window.setTimeout(function () {
+      state.locked = false;
+      state.index += 1;
+      if (state.index >= QUESTIONS.length) {
+        finish();
+      } else {
+        renderQuestion();
+      }
+    }, 200);
+  }
+
+  /* ---------- 结果 ---------- */
+  function finish() {
+    var type = computeType(state.answers);
+    var data = RESULTS[type];
+
+    els.resType.textContent = type;
+    els.resNick.textContent = data.nickname;
+    els.resStyle.textContent = styleTagOf(type);
+    els.resSlogan.textContent = data.slogan;
+    els.resDesc.textContent = data.description;
+
+    els.resKws.innerHTML = "";
+    data.keywords.split(" / ").forEach(function (word) {
+      var chip = document.createElement("span");
+      chip.textContent = word;
+      els.resKws.appendChild(chip);
+    });
+
+    /* 最佳赛道搭子：把“类型｜昵称”部分加粗 */
+    var partner = data.partner;
+    var sep = partner.indexOf("——");
+    els.resPartner.innerHTML = "";
+    if (sep > -1) {
+      var head = document.createElement("b");
+      head.textContent = partner.slice(0, sep);
+      els.resPartner.appendChild(head);
+      els.resPartner.appendChild(document.createTextNode(partner.slice(sep)));
+    } else {
+      els.resPartner.textContent = partner;
+    }
+
+    showScreen("result");
+  }
+
+  /* ---------- 流程 ---------- */
+  function start() {
+    state.index = 0;
+    state.answers = [];
+    state.locked = false;
+    els.progressBar.style.width = (1 / QUESTIONS.length * 100).toFixed(2) + "%";
+    showScreen("quiz");
+    renderQuestion();
+  }
+
+  function restart() {
+    state.index = 0;
+    state.answers = [];
+    state.locked = false;
+    els.opts.innerHTML = "";
+    showScreen("start");
+  }
+
+  document.getElementById("btn-start").addEventListener("click", start);
+  document.getElementById("btn-restart").addEventListener("click", restart);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && els.screens.start.classList.contains("is-on")) { start(); }
+  });
+
+  /* 名称统一取 EVENT_NAME 常量 */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-event]"), function (node) {
+    node.textContent = EVENT_NAME;
+  });
+  document.title = EVENT_NAME + "｜跑者人格测试";
+  document.getElementById("screen-quiz").setAttribute("aria-label", EVENT_NAME + " 跑者人格测试答题");
+
+  /* 照片加载失败：背景图方式不会触发 <img> 的 onerror，这里主动探测后切到红橙渐变占位 */
+  var photoProbe = new Image();
+  photoProbe.onerror = function () {
+    Array.prototype.forEach.call(document.querySelectorAll(".photo"), function (node) {
+      node.classList.add("photo-fallback");
+    });
+  };
+  photoProbe.src = "guangma-photo.jpg";
+})();
+</script>
+</body>
+</html>
